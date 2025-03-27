@@ -1,0 +1,115 @@
+﻿@page "/"
+@using BusWhenCome.Client.Services.BusStops
+@implements IDisposable
+@inject IBusArrivalService BusArrivalService
+@inject IBusStopService BusStopService
+@inject NavigationManager Navigation
+
+<article class="bus-arrival-page">
+    <header class="app-header">
+        <h1>🚌 BusWhenCome</h1>
+    </header>
+
+    <section class="search-panel">
+        <form @onsubmit="OnSubmitAsync">
+            <input class="input" @bind="BusStopId" placeholder="Enter Bus Stop ID" />
+            <button type="submit" class="btn">Fetch</button>
+        </form>
+
+        @if (!string.IsNullOrWhiteSpace(BusStopName))
+        {
+            <h2 class="stop-title">📍 @BusStopName (@BusStopId)</h2>
+        }
+    </section>
+
+    @if (busArrivals?.Services?.Any() == true)
+    {
+        <section class="arrival-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Bus #</th>
+                        <th>Arrival</th>
+                        <th>Next</th>
+                        <th>Later</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var service in busArrivals.Services)
+                    {
+                        <tr>
+                            <td>@service.Number</td>
+                            <td>@DisplayArrivalTime(service.Next?.DurationMs)</td>
+                            <td>@DisplayArrivalTime(service.Next2?.DurationMs)</td>
+                            <td>@DisplayArrivalTime(service.Next3?.DurationMs)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </section>
+    }
+    else if (!string.IsNullOrWhiteSpace(BusStopId))
+    {
+        <p class="no-results">No arrival data found for this bus stop.</p>
+    }
+</article>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "stop-id")]
+    public string? StopId { get; set; }
+
+    private string BusStopId { get; set; } = string.Empty;
+    private string? BusStopName;
+    private BusArrivalResponse? busArrivals;
+    private Timer? _timer;
+
+    private async Task OnSubmitAsync()
+    {
+        Navigation.NavigateTo($"/?stop-id={BusStopId}");
+        await GetBusArrivals();
+    }
+
+    private async Task GetBusArrivals()
+    {
+        if (!string.IsNullOrWhiteSpace(BusStopId))
+        {
+            var busStop = await BusStopService.GetBusStop(BusStopId);
+            BusStopName = busStop?.Description;
+
+            busArrivals = await BusArrivalService.GetBusArrivalsAsync(BusStopId);
+            StateHasChanged();
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!string.IsNullOrWhiteSpace(StopId))
+        {
+            BusStopId = StopId;
+        }
+
+        _timer = new Timer(async _ =>
+        {
+            await InvokeAsync(GetBusArrivals);
+        }, null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
+    }
+
+    private string DisplayArrivalTime(double? durationMs)
+    {
+        if (durationMs == null)
+            return "-";
+
+        var minutes = durationMs.Value / 60000;
+
+        if (minutes < 1)
+            return "ARR";
+
+        return $"{Math.Round(minutes)} min";
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+}

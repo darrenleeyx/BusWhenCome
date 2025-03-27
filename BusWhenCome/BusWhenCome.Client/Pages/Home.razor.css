@@ -1,0 +1,74 @@
+.bus-arrival-page {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 1rem;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.app-header {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.search-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.input {
+    padding: 0.5rem;
+    font-size: 1rem;
+    border-radius: 0.4rem;
+    border: 1px solid #ccc;
+}
+
+.btn {
+    background-color: #2F80ED;
+    color: white;
+    border: none;
+    padding: 0.5rem;
+    font-size: 1rem;
+    border-radius: 0.4rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+    .btn:hover {
+        background-color: #1c60c8;
+    }
+
+.stop-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.arrival-table {
+    overflow-x: auto;
+}
+
+    .arrival-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .arrival-table th, .arrival-table td {
+        border: 1px solid #ddd;
+        padding: 0.75rem;
+        text-align: center;
+    }
+
+    .arrival-table th {
+        background-color: #f5f5f5;
+    }
+
+.no-results {
+    text-align: center;
+    color: #999;
+    margin-top: 1rem;
+}

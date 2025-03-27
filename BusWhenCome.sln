@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35913.81 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BusWhenCome", "BusWhenCome\BusWhenCome\BusWhenCome.csproj", "{F833E54F-FCCF-4936-B4A5-907346508B06}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BusWhenCome.Client", "BusWhenCome\BusWhenCome.Client\BusWhenCome.Client.csproj", "{CB7BA419-FF2F-411C-9500-1D40B2564B41}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F833E54F-FCCF-4936-B4A5-907346508B06}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F833E54F-FCCF-4936-B4A5-907346508B06}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F833E54F-FCCF-4936-B4A5-907346508B06}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F833E54F-FCCF-4936-B4A5-907346508B06}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CB7BA419-FF2F-411C-9500-1D40B2564B41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CB7BA419-FF2F-411C-9500-1D40B2564B41}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CB7BA419-FF2F-411C-9500-1D40B2564B41}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CB7BA419-FF2F-411C-9500-1D40B2564B41}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EC0A4363-B84A-4A73-9B23-6F7E2EBA0BA8}
+	EndGlobalSection
+EndGlobal
