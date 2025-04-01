@@ -72,3 +72,17 @@
     color: #999;
     margin-top: 1rem;
 }
+
+.status-bar {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.last-updated {
+    font-style: italic;
+}

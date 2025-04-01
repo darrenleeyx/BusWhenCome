@@ -11,19 +11,33 @@
     </header>
 
     <section class="search-panel">
-        <form @onsubmit="OnSubmitAsync">
-            <input class="input" @bind="BusStopId" placeholder="Enter Bus Stop ID" />
-            <button type="submit" class="btn">Fetch</button>
+        <form @onsubmit="FetchBusDataAsync">
+            <input class="input"
+            @bind="_busStopId"
+            @bind:event="oninput"
+            placeholder="Enter Bus Stop ID" />
+            <button type="submit" class="btn" disabled="@string.IsNullOrWhiteSpace(_busStopId)">Fetch</button>
         </form>
 
-        @if (!string.IsNullOrWhiteSpace(BusStopName))
+        @if (!string.IsNullOrWhiteSpace(_busStopName))
         {
-            <h2 class="stop-title">📍 @BusStopName (@BusStopId)</h2>
+            <h2 class="stop-title">📍 @_busStopName</h2>
         }
     </section>
 
-    @if (busArrivals?.Services?.Any() == true)
+    @if (_busArrivals?.Services?.Any() == true)
     {
+        @if (_timer is not null || _lastUpdated.HasValue)
+        {
+            <div class="status-bar">
+                <span>Next refresh in: @_countdown seconds</span>
+                @if (_lastUpdated.HasValue)
+                {
+                    <span class="last-updated">Last updated: @_lastUpdated.Value.ToString("HH:mm:ss")</span>
+                }
+            </div>
+        }
+
         <section class="arrival-table">
             <table>
                 <thead>
@@ -35,22 +49,26 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var service in busArrivals.Services)
+                    @foreach (var service in _busArrivals.Services)
                     {
                         <tr>
                             <td>@service.Number</td>
-                            <td>@DisplayArrivalTime(service.Next?.DurationMs)</td>
-                            <td>@DisplayArrivalTime(service.Next2?.DurationMs)</td>
-                            <td>@DisplayArrivalTime(service.Next3?.DurationMs)</td>
+                            <td>@FormatArrivalTime(service.Next?.DurationMs)</td>
+                            <td>@FormatArrivalTime(service.Next2?.DurationMs)</td>
+                            <td>@FormatArrivalTime(service.Next3?.DurationMs)</td>
                         </tr>
                     }
                 </tbody>
             </table>
         </section>
     }
-    else if (!string.IsNullOrWhiteSpace(BusStopId))
+    else if (_hasFetchError)
     {
         <p class="no-results">No arrival data found for this bus stop.</p>
+    }
+    else
+    {
+        <p class="no-results">No bus stop ID was provided.</p>
     }
 </article>
 
@@ -59,53 +77,123 @@
     [SupplyParameterFromQuery(Name = "stop-id")]
     public string? StopId { get; set; }
 
-    private string BusStopId { get; set; } = string.Empty;
-    private string? BusStopName;
-    private BusArrivalResponse? busArrivals;
-    private Timer? _timer;
-
-    private async Task OnSubmitAsync()
+    private string _busStopIdValue = string.Empty;
+    private string _busStopId
     {
-        Navigation.NavigateTo($"/?stop-id={BusStopId}");
-        await GetBusArrivals();
-    }
-
-    private async Task GetBusArrivals()
-    {
-        if (!string.IsNullOrWhiteSpace(BusStopId))
+        get => _busStopIdValue;
+        set
         {
-            var busStop = await BusStopService.GetBusStop(BusStopId);
-            BusStopName = busStop?.Description;
+            _busStopIdValue = value;
 
-            busArrivals = await BusArrivalService.GetBusArrivalsAsync(BusStopId);
-            StateHasChanged();
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                ResetData();
+            }
         }
     }
 
-    protected override void OnInitialized()
+    private string? _busStopName;
+    private BusArrivalResponse? _busArrivals;
+    private Timer? _timer;
+    private int _defaultCountdown = 30;
+    private int _countdown;
+    private bool _hasFetchError = false;
+    private DateTime? _lastUpdated;
+
+    protected override async Task OnInitializedAsync()
     {
         if (!string.IsNullOrWhiteSpace(StopId))
         {
-            BusStopId = StopId;
+            _busStopId = StopId;
+            await FetchArrivalsAsync();
+            StartRefreshTimer(FetchArrivalsAsync);
         }
+    }
+
+    private async Task FetchBusDataAsync()
+    {
+        _busStopId = _busStopId?.Trim() ?? string.Empty;
+
+        if (!string.IsNullOrEmpty(_busStopId))
+        {
+            var uri = new Uri(Navigation.Uri);
+            var baseUri = uri.GetLeftPart(UriPartial.Path);
+            Navigation.NavigateTo($"{baseUri}?stop-id={_busStopId}", forceLoad: false);
+
+            await FetchArrivalsAsync();
+
+            StartRefreshTimer(FetchArrivalsAsync);
+        }
+    }
+
+    private void StartRefreshTimer(Func<Task> onTick)
+    {
+        _timer?.Dispose();
+        _countdown = _defaultCountdown + 1;
 
         _timer = new Timer(async _ =>
         {
-            await InvokeAsync(GetBusArrivals);
-        }, null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
+            if (_countdown == 0)
+            {
+                await InvokeAsync(onTick);
+                _countdown = _defaultCountdown;
+                await InvokeAsync(StateHasChanged);
+            }
+            else if (_countdown > 0)
+            {
+                _countdown--;
+                await InvokeAsync(StateHasChanged);
+            }
+
+        }, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
     }
 
-    private string DisplayArrivalTime(double? durationMs)
+    private async Task FetchArrivalsAsync()
     {
-        if (durationMs == null)
+        _hasFetchError = false;
+
+        if (string.IsNullOrWhiteSpace(_busStopId))
+        {
+            _busArrivals = null;
+            return;
+        }
+
+        var busStop = await BusStopService.GetBusStop(_busStopId);
+
+        if (busStop is null)
+        {
+            _hasFetchError = true;
+            _busArrivals = null;
+            _busStopName = null;
+            _lastUpdated = null;
+            return;
+        }
+
+        _busStopName = $"{busStop.Description} ({busStop.BusStopId})";
+        _busArrivals = await BusArrivalService.GetBusArrivalsAsync(_busStopId);
+        _lastUpdated = DateTime.Now;
+        StateHasChanged();
+    }
+
+    private void ResetData()
+    {
+        _busArrivals = null;
+        _busStopName = null;
+        _hasFetchError = false;
+        _timer?.Dispose();
+        _timer = null;
+        _countdown = 0;
+        _lastUpdated = null;
+    }
+
+    private string FormatArrivalTime(double? durationMs)
+    {
+        if (durationMs is null)
             return "-";
 
         var minutes = durationMs.Value / 60000;
 
-        if (minutes < 1)
-            return "ARR";
-
-        return $"{Math.Round(minutes)} min";
+        return minutes < 1 ? "ARR" : $"{Math.Round(minutes)} min";
     }
 
     public void Dispose()

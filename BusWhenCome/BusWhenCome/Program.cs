@@ -2,8 +2,17 @@ using BusWhenCome.Client.Services.BusStops;
 using BusWhenCome.Components;
 using BusWhenCome.Data.BusStops;
 using Microsoft.AspNetCore.Mvc;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File("Logs/log.txt", rollingInterval: RollingInterval.Day)
+    .Enrich.FromLogContext()
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
@@ -45,7 +54,7 @@ app.MapRazorComponents<App>()
 
 app.MapReverseProxy();
 
-app.MapGet("/bus-stops", async ([FromQuery] string id, [FromServices] IBusStopRepository repository) =>
+app.MapGet("/bus-stops", ([FromQuery] string id, [FromServices] IBusStopRepository repository) =>
 {
     var busStop = repository.Get(id);
     return Results.Ok(busStop);
