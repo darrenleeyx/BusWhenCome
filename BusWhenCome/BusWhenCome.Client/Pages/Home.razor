@@ -1,5 +1,6 @@
 ﻿@page "/"
 @using BusWhenCome.Client.Services.BusStops
+@using Microsoft.AspNetCore.WebUtilities
 @implements IDisposable
 @inject IBusArrivalService BusArrivalService
 @inject IBusStopService BusStopService
@@ -99,14 +100,23 @@
     private int _countdown;
     private bool _hasFetchError = false;
     private DateTime? _lastUpdated;
+    private bool _hasInitializedFromQuery = false;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!string.IsNullOrWhiteSpace(StopId))
+        if (firstRender && !_hasInitializedFromQuery)
         {
-            _busStopId = StopId;
-            await FetchArrivalsAsync();
-            StartRefreshTimer(FetchArrivalsAsync);
+            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+
+            if (QueryHelpers.ParseQuery(uri.Query)
+                .TryGetValue("stop-id", out var stopIdFromQuery))
+            {
+                _busStopId = stopIdFromQuery!;
+                await FetchArrivalsAsync();
+                StartRefreshTimer(FetchArrivalsAsync);
+            }
+
+            _hasInitializedFromQuery = true;
         }
     }
 

@@ -1,6 +1,7 @@
 using BusWhenCome.Client.Services.BusStops;
 using BusWhenCome.Components;
 using BusWhenCome.Data.BusStops;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 
@@ -13,6 +14,10 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 builder.Host.UseSerilog();
+
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(@"Keys"))
+    .SetApplicationName("BusWhenCome");
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
