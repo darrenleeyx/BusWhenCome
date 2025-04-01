@@ -16,6 +16,18 @@
 <body>
     <Routes @rendermode="InteractiveAuto" />
     <script src="_framework/blazor.web.js"></script>
+    <script>
+        window.busWhenCome = {
+            registerFocusHandlers: function (dotNetObjRef) {
+                window.addEventListener('focus', () => {
+                    dotNetObjRef.invokeMethodAsync('SetBrowserFocusState', true);
+                });
+                window.addEventListener('blur', () => {
+                    dotNetObjRef.invokeMethodAsync('SetBrowserFocusState', false);
+                });
+            }
+        };
+    </script>
 </body>
 
 </html>
