@@ -65,4 +65,9 @@ app.MapGet("/bus-stops", ([FromQuery] string id, [FromServices] IBusStopReposito
     return Results.Ok(busStop);
 });
 
+app.MapMethods("/", new[] { "HEAD" }, () =>
+{
+    return Results.Ok();
+});
+
 app.Run();
